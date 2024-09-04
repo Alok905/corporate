@@ -79,6 +79,15 @@ const updateDetails = asyncHandler(async (req, res, next) => {
   };
 
   const reporter = await Employee.findById(req.employee.reporter);
+
+  reporter.userUpdateApprovals = reporter.userUpdateApprovals.filter(
+    (approval) =>
+      !(
+        approval.userDetails.userId.toString() ===
+          req.employee._id.toString() && approval.status === "PENDING"
+      )
+  );
+
   reporter.userUpdateApprovals.push({
     userDetails: employee,
   });
@@ -234,6 +243,10 @@ const approveEmployeeUpdation = asyncHandler(async (req, res, next) => {
     (data) => data.userDetails.userId.toString() === employeeId.toString()
   );
 
+  if (!currentApproval) {
+    throw new Error("No pending approvals.");
+  }
+
   approved
     ? (currentApproval.status = "APPROVED")
     : (currentApproval.status = "REJECTED");
@@ -252,6 +265,22 @@ const approveEmployeeUpdation = asyncHandler(async (req, res, next) => {
   res.status(201).json({
     status: "success",
     data: null,
+  });
+});
+
+const deleteEmployeeUpdateApproval = asyncHandler(async (req, res, next) => {
+  const { approvalId } = req.params;
+
+  req.employee.userUpdateApprovals = req.employee.userUpdateApprovals.filter(
+    (approval) => approval._id.toString() !== approvalId.toString()
+  );
+
+  await req.employee.save();
+
+  res.status(201).json({
+    status: "success",
+    data: null,
+    message: "Deleted successfully",
   });
 });
 
@@ -274,6 +303,7 @@ export {
   getReporteesById,
   updateEmployeeById,
   approveEmployeeUpdation,
+  deleteEmployeeUpdateApproval,
   deleteEmployeeById,
 };
 

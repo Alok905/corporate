@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   approveEmployeeUpdation,
+  deleteEmployeeUpdateApproval,
   getReportees,
   getReporteesById,
   login,
@@ -20,6 +21,10 @@ router.route("/update").put(authenticate, updateDetails);
 router
   .route("/approval/:employeeId")
   .put(authenticate, approveEmployeeUpdation);
+
+router
+  .route("/approval/:approvalId")
+  .delete(authenticate, deleteEmployeeUpdateApproval);
 
 // ADMIN ROUTES
 router.route("/register").post(authenticate, authorizeAdmin, registerEmployee);
