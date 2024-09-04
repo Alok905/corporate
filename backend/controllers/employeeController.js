@@ -110,8 +110,16 @@ const updateDetails = asyncHandler(async (req, res, next) => {
 //////////////////
 // Admin Controllers
 const registerEmployee = asyncHandler(async (req, res, next) => {
-  const { name, email, personalEmail, password, mobile, role, reporterEmail } =
-    req.body;
+  const {
+    name,
+    email,
+    personalEmail,
+    password,
+    mobile,
+    role,
+    reporterEmail,
+    isAdmin,
+  } = req.body;
 
   if (!name || !email || !password || !mobile || !role || !reporterEmail) {
     throw new Error("All fields are required.");
@@ -138,6 +146,8 @@ const registerEmployee = asyncHandler(async (req, res, next) => {
     mobile,
     role,
   };
+
+  isAdmin && (newEmployeeDetails = { ...newEmployeeDetails, isAdmin });
 
   reporterEmployee &&
     (newEmployeeDetails = {
@@ -188,12 +198,21 @@ const updateEmployeeById = asyncHandler(async (req, res, next) => {
     throw new Error("Employee doesn't exist.");
   }
 
-  const { name, email, personalEmail, password, mobile, role, reporterEmail } =
-    req.body;
+  const {
+    name,
+    email,
+    personalEmail,
+    password,
+    mobile,
+    role,
+    reporterEmail,
+    isAdmin,
+  } = req.body;
 
   name && (employee.name = name);
   email && (employee.email = email);
   personalEmail && (employee.personalEmail = personalEmail);
+  isAdmin && (employee.isAdmin = isAdmin);
 
   if (password) {
     const salt = await bcrypt.genSalt(10);
