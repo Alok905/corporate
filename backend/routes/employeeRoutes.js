@@ -1,17 +1,16 @@
 import { Router } from "express";
 import {
   approveEmployeeUpdation,
-  deleteEmployeeUpdateApproval,
   getReportees,
   getReporteesById,
   login,
-  searchEmployee,
   registerEmployee,
   updateDetails,
   updateEmployeeById,
   getEmployees,
   getHierarchy,
-  getHierarchyById
+  getHierarchyById,
+  getApprovals,
 } from "../controllers/employeeController.js";
 import { authenticate, authorizeAdmin } from "../middlewares/auth.js";
 
@@ -21,16 +20,16 @@ router.route("/login").post(login);
 router.route("/reportees").get(authenticate, getReportees);
 router.route("/reportees/hierarchy").get(authenticate, getHierarchy);
 router.route("/update").put(authenticate, updateDetails);
+router.route("/approval").get(authenticate, getApprovals);
 
 // send true or false for approval in the body
-router
-  .route("/approval/:employeeId")
-  .put(authenticate, approveEmployeeUpdation);
+// router
+//   .route("/approval/:employeeId")
+//   .put(authenticate, approveEmployeeUpdation);
 
 router
   .route("/approval/:approvalId")
-  .delete(authenticate, deleteEmployeeUpdateApproval);
-
+  .put(authenticate, approveEmployeeUpdation);
 
 // ADMIN ROUTES
 router.route("/").get(authenticate, authorizeAdmin, getEmployees);
@@ -48,6 +47,5 @@ router
 router
   .route("/:employeeId/reportees/hierarchy")
   .get(authenticate, authorizeAdmin, getHierarchyById);
-
 
 export default router;

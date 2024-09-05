@@ -3,7 +3,8 @@ import Employee from "../models/employeeModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import validatePassword from "../utils/validatePassword.js";
 import createToken from "../utils/createToken.js";
-import getHierarchy from "../utils/getHierarchy.js"
+import getHierarchialData from "../utils/getHierarchialData.js";
+import Approval from "../models/approvalModel.js";
 
 // All Users Controllers
 const login = asyncHandler(async (req, res) => {
@@ -41,69 +42,121 @@ const getReportees = asyncHandler(async (req, res, next) => {
   });
 });
 
+const getHierarchy = asyncHandler(async (req, res, next) => {
+  const employee = await getHierarchialData(req.employee._id);
+
+  res.status(201).json({
+    status: "success",
+    data: employee,
+  });
+});
+
 const updateDetails = asyncHandler(async (req, res, next) => {
   const { personalEmail, password, mobile } = req.body;
 
-  //   personalEmail && (req.employee.personalEmail = personalEmail);
-  //   mobile && (req.employee.mobile = mobile);
+  if (req.employee.role === "CEO") {
+    personalEmail && (req.employee.personalEmail = personalEmail);
+    password && (req.employee.password = password);
+    mobile && (req.employee.mobile = mobile);
 
-  //   if (password) {
-  //     const salt = await bcrypt.genSalt(10);
-  //     const hashedPassword = await bcrypt.hash(password, salt);
-  //     req.employee.password = hashedPassword;
-  //   }
+    await req.employee.save();
 
-  //   const updatedEmployee = await req.employee.save();
+    return res.status(201).json({
+      status: "success",
+      message: "data updated.",
+      data: req.employee,
+    });
+  }
 
-  //   delete updatedEmployee.password;
-  //   res.status(201).json({
-  //     status: "success",
-  //     data: updatedEmployee,
-  //   });
-
-  let updatingEmployeeDetails = {};
-  personalEmail &&
-    (updatingEmployeeDetails = { ...updatingEmployeeDetails, personalEmail });
+  let update = {};
+  personalEmail && (update = { ...update, personalEmail });
   if (password) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    updatingEmployeeDetails = {
-      ...updatingEmployeeDetails,
+    update = {
+      ...update,
       password: hashedPassword,
     };
   }
-  mobile && (updatingEmployeeDetails = { ...updatingEmployeeDetails, mobile });
-
-  const employee = {
-    userId: req.employee._id,
-    updatingEmployeeDetails,
-  };
+  mobile && (update = { ...update, mobile });
 
   const reporter = await Employee.findById(req.employee.reporter);
 
-  reporter.userUpdateApprovals = reporter.userUpdateApprovals.filter(
-    (approval) =>
-      !(
-        approval.userDetails.userId.toString() ===
-          req.employee._id.toString() && approval.status === "PENDING"
-      )
-  );
-
-  reporter.userUpdateApprovals.push({
-    userDetails: employee,
+  const approvalExists = await Approval.findOne({
+    $and: [{ from: req.employee._id }, { status: "PENDING" }],
   });
 
-  //   console.log(
-  //     reporter,
-  //     reporter.userUpdateApprovals[0].userDetails,
-  //     reporter.userUpdateApprovals[0].userDetails?.updatingEmployeeDetails
-  //   );
+  if (approvalExists) {
+    approvalExists.update = update;
+    await approvalExists.save();
+  } else {
+    const newApproval = new Approval({
+      from: req.employee._id,
+      to: req.employee.reporter,
+      update,
+    });
 
-  await reporter.save();
+    reporter.approvals.push(newApproval._id);
+    await newApproval.save();
+    await reporter.save();
+  }
 
   res.status(201).json({
     status: "success",
     message: "pending for approval",
+    data: null,
+  });
+});
+
+const getApprovals = asyncHandler(async (req, res, next) => {
+  const status = req.query?.status;
+  const findQuery =
+    !status || status.length === 0
+      ? { $or: [{ from: req.employee._id }, { to: req.employee._id }] }
+      : status.toUpperCase() === "SELF_REQUESTED"
+      ? { from: req.employee._id }
+      : { status: status.toUpperCase() };
+
+  const approvals = await Approval.find(findQuery);
+
+  res.status(201).json({
+    status: "success",
+    data: approvals,
+  });
+});
+
+const approveEmployeeUpdation = asyncHandler(async (req, res, next) => {
+  const { approvalId } = req.params;
+
+  if (!approvalId) {
+    throw new Error("Approval ID is required.");
+  }
+
+  const approval = await Approval.findById(approvalId);
+
+  if (!approval || approval.to.toString() !== req.employee._id.toString()) {
+    throw new Error("Invalid approval ID");
+  }
+
+  const requestingEmployee = await Employee.findById(approval.from);
+  const { approved: isApproved } = req.body;
+
+  approval.status = isApproved ? "APPROVED" : "REJECTED";
+
+  if (isApproved) {
+    approval.update.personalEmail &&
+      (requestingEmployee.personalEmail = approval.update.personalEmail);
+    approval.update.password &&
+      (requestingEmployee.password = approval.update.password);
+    approval.update.mobile &&
+      (requestingEmployee.mobile = approval.update.mobile);
+  }
+
+  await approval.save();
+  await requestingEmployee.save();
+
+  res.status(201).json({
+    status: "success",
     data: null,
   });
 });
@@ -173,19 +226,27 @@ const registerEmployee = asyncHandler(async (req, res, next) => {
   });
 });
 
-const getEmployees = asyncHandler(async(req, res, next) => {
+const getEmployees = asyncHandler(async (req, res, next) => {
   const search = req.query.search;
-  let searchRegex = /^.*$/
-  if(search) {
+  let searchRegex = /^.*$/;
+  if (search) {
     searchRegex = `.*${search.split("").join(".*")}.*`;
   }
-  const employees = await Employee.find({$or: [{email: {$regex: searchRegex, $options: "i"}}, {name: {$regex: searchRegex, $options: "i"}}]}, {name: 1, email: 1, role: 1});
+  const employees = await Employee.find(
+    {
+      $or: [
+        { email: { $regex: searchRegex, $options: "i" } },
+        { name: { $regex: searchRegex, $options: "i" } },
+      ],
+    },
+    { name: 1, email: 1, role: 1 }
+  );
 
   res.status(201).json({
     status: "success",
-    data: employees
-  })
-})
+    data: employees,
+  });
+});
 
 const getReporteesById = asyncHandler(async (req, res, next) => {
   const { employeeId } = req.params;
@@ -203,31 +264,21 @@ const getReporteesById = asyncHandler(async (req, res, next) => {
   });
 });
 
-const getHierarchy = asyncHandler(async (req, res, next) => {
-  const employee = getHierarchy(req.employee._id);
-
-  res.status(201).json({
-    status: "success",
-    data: employee
-  })
-})
-
 const getHierarchyById = asyncHandler(async (req, res, next) => {
-  let {employeeId} = req.params;
-  if(!employeeId) {
-    throw new Error("Employee ID is required.")
+  let { employeeId } = req.params;
+  if (!employeeId) {
+    throw new Error("Employee ID is required.");
   }
-     
-  if(employeeId == "root")
-    employeeId = await Employee.find({role: "CEO"});
 
-  const employee = getHierarchy(employeeId);
+  if (employeeId == "root") employeeId = await Employee.find({ role: "CEO" });
+
+  const employee = await getHierarchialData(employeeId);
 
   res.status(201).json({
     status: "success",
-    data: employee
-  })
-})
+    data: employee,
+  });
+});
 
 const updateEmployeeById = asyncHandler(async (req, res, next) => {
   const { employeeId } = req.params;
@@ -289,61 +340,6 @@ const updateEmployeeById = asyncHandler(async (req, res, next) => {
   });
 });
 
-const approveEmployeeUpdation = asyncHandler(async (req, res, next) => {
-  const { employeeId } = req.params;
-
-  const employee = await Employee.findById(employeeId);
-  if (!employee) {
-    throw new Error("Employee doesn't exists.");
-  }
-
-  const { approved } = req.body;
-
-  const currentApproval = req.employee.userUpdateApprovals.find(
-    (data) => data.userDetails.userId.toString() === employeeId.toString()
-  );
-
-  if (!currentApproval) {
-    throw new Error("No pending approvals.");
-  }
-
-  approved
-    ? (currentApproval.status = "APPROVED")
-    : (currentApproval.status = "REJECTED");
-
-  await req.employee.save();
-
-  if (approved) {
-    const { personalEmail, password, mobile } =
-      currentApproval.userDetails.updatingEmployeeDetails;
-    personalEmail && (employee.personalEmail = personalEmail);
-    password && (employee.password = password);
-    mobile && (employee.mobile = mobile);
-
-    await employee.save();
-  }
-  res.status(201).json({
-    status: "success",
-    data: null,
-  });
-});
-
-const deleteEmployeeUpdateApproval = asyncHandler(async (req, res, next) => {
-  const { approvalId } = req.params;
-
-  req.employee.userUpdateApprovals = req.employee.userUpdateApprovals.filter(
-    (approval) => approval._id.toString() !== approvalId.toString()
-  );
-
-  await req.employee.save();
-
-  res.status(201).json({
-    status: "success",
-    data: null,
-    message: "Deleted successfully",
-  });
-});
-
 const deleteEmployeeById = asyncHandler(async (req, res, next) => {
   const { employeeId } = req.params;
 
@@ -360,13 +356,13 @@ export {
   getReportees,
   updateDetails,
   registerEmployee,
+  getApprovals,
   getEmployees, // search by email or name
   getReporteesById,
   getHierarchy, // get self hierarchy
   getHierarchyById, // get the hierarchy of other employees (admin)
   updateEmployeeById,
   approveEmployeeUpdation,
-  deleteEmployeeUpdateApproval,
   deleteEmployeeById,
 };
 
@@ -431,6 +427,46 @@ const registerEmployee = asyncHandler(async (req, res, next) => {
   res.status(201).json({
     status: "success",
     data: newEmployee,
+  });
+});
+
+
+const approveEmployeeUpdation = asyncHandler(async (req, res, next) => {
+  const { employeeId } = req.params;
+
+  const employee = await Employee.findById(employeeId);
+  if (!employee) {
+    throw new Error("Employee doesn't exists.");
+  }
+
+  const { approved } = req.body;
+
+  const currentApproval = req.employee.userUpdateApprovals.find(
+    (data) => data.userDetails.userId.toString() === employeeId.toString()
+  );
+
+  if (!currentApproval) {
+    throw new Error("No pending approvals.");
+  }
+
+  approved
+    ? (currentApproval.status = "APPROVED")
+    : (currentApproval.status = "REJECTED");
+
+  await req.employee.save();
+
+  if (approved) {
+    const { personalEmail, password, mobile } =
+      currentApproval.userDetails.updatingEmployeeDetails;
+    personalEmail && (employee.personalEmail = personalEmail);
+    password && (employee.password = password);
+    mobile && (employee.mobile = mobile);
+
+    await employee.save();
+  }
+  res.status(201).json({
+    status: "success",
+    data: null,
   });
 });
 */

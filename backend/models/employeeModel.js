@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { approvalSchema } from "./approvalModel.js";
 
 const validateEmail = (isOfficial, email) => {
   const regex = new RegExp(
@@ -49,33 +50,10 @@ const employeeSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    userUpdateApprovals: [
+    approvals: [
       {
-        userDetails: {
-          userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            unique: true,
-          },
-          updatingEmployeeDetails: {
-            personalEmail: {
-              type: String,
-              default: null,
-            },
-            password: {
-              type: String,
-              default: null,
-            },
-            mobile: {
-              type: String,
-              default: null,
-            },
-          },
-        },
-        status: {
-          type: String,
-          enum: ["PENDING", "REJECTED", "APPROVED"],
-          default: "PENDING",
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Approval",
       },
     ],
     reportees: [
