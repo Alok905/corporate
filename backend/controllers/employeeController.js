@@ -3,6 +3,7 @@ import Employee from "../models/employeeModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import validatePassword from "../utils/validatePassword.js";
 import createToken from "../utils/createToken.js";
+import getHierarchy from "../utils/getHierarchy.js"
 
 // All Users Controllers
 const login = asyncHandler(async (req, res) => {
@@ -172,6 +173,20 @@ const registerEmployee = asyncHandler(async (req, res, next) => {
   });
 });
 
+const getEmployees = asyncHandler(async(req, res, next) => {
+  const search = req.query.search;
+  let searchRegex = /^.*$/
+  if(search) {
+    searchRegex = `.*${search.split("").join(".*")}.*`;
+  }
+  const employees = await Employee.find({$or: [{email: {$regex: searchRegex, $options: "i"}}, {name: {$regex: searchRegex, $options: "i"}}]}, {name: 1, email: 1, role: 1});
+
+  res.status(201).json({
+    status: "success",
+    data: employees
+  })
+})
+
 const getReporteesById = asyncHandler(async (req, res, next) => {
   const { employeeId } = req.params;
   if (!employeeId) {
@@ -187,6 +202,18 @@ const getReporteesById = asyncHandler(async (req, res, next) => {
     data: reportees,
   });
 });
+
+const getEmployeeHierarchy = asyncHandler(async (req, res, next) => {
+  let {employeeId} = req.params;
+  if(!employeeId) {
+    throw new Error("Employee ID is required.")
+  }
+  
+  if(employeeId == "root")
+    employeeId = await Employee.find({role: "CEO"});
+
+  const employee = getHierarchy(employeeId);
+})
 
 const updateEmployeeById = asyncHandler(async (req, res, next) => {
   const { employeeId } = req.params;
@@ -319,7 +346,9 @@ export {
   getReportees,
   updateDetails,
   registerEmployee,
+  getEmployees, // search by email or name
   getReporteesById,
+  getEmployeeHierarchy, // get the hierarchy from current employee or root(CEO)
   updateEmployeeById,
   approveEmployeeUpdation,
   deleteEmployeeUpdateApproval,
