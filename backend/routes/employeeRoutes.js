@@ -32,6 +32,11 @@ router
 
 // ADMIN ROUTES
 router.route("/register").post(authenticate, authorizeAdmin, registerEmployee);
+
+router
+  .route("/update/:employeeId")
+  .put(authenticate, authorizeAdmin, updateEmployeeById);
+
 router
   .route("/:employeeId/reportees")
   .get(authenticate, authorizeAdmin, getReporteesById);
@@ -40,8 +45,5 @@ router
   .route("/:employeeId/reportees/hierarchy")
   .get(authenticate, authorizeAdmin, getHierarchyById);
 
-router
-  .route("/update/:employeeId")
-  .put(authenticate, authorizeAdmin, updateEmployeeById);
 
 export default router;
