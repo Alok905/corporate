@@ -9,6 +9,7 @@ import {
   registerEmployee,
   updateDetails,
   updateEmployeeById,
+  getEmployees,
   getHierarchy,
   getHierarchyById
 } from "../controllers/employeeController.js";
@@ -32,7 +33,7 @@ router
 
 
 // ADMIN ROUTES
-router.route("/").get(searchEmployee);
+router.route("/").get(authenticate, authorizeAdmin, getEmployees);
 
 router.route("/register").post(authenticate, authorizeAdmin, registerEmployee);
 
