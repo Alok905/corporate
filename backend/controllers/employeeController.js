@@ -203,14 +203,19 @@ const getReporteesById = asyncHandler(async (req, res, next) => {
   });
 });
 
-const getEmployeeHierarchy = asyncHandler(async (req, res, next) => {
+const getHierarchy = asyncHandler(async (req, res, next) => {
+  const employee = getHierarchy(req.employee._id);
+
+  res.status(201).json({
+    status: "success",
+    data: employee
+  })
+})
+
+const getHierarchyById = asyncHandler(async (req, res, next) => {
   let {employeeId} = req.params;
   if(!employeeId) {
     throw new Error("Employee ID is required.")
-  }
-  
-  if(req.employee._id.toString() !== employeeId.toString() && !req.employee.isAdmin){
-    throw new Error("Not authorized as admin.")
   }
      
   if(employeeId == "root")
@@ -357,7 +362,8 @@ export {
   registerEmployee,
   getEmployees, // search by email or name
   getReporteesById,
-  getEmployeeHierarchy, // get the hierarchy from current employee or root(CEO)
+  getHierarchy, // get self hierarchy
+  getHierarchyById, // get the hierarchy of other employees (admin)
   updateEmployeeById,
   approveEmployeeUpdation,
   deleteEmployeeUpdateApproval,
