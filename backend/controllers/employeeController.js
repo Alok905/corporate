@@ -209,10 +209,19 @@ const getEmployeeHierarchy = asyncHandler(async (req, res, next) => {
     throw new Error("Employee ID is required.")
   }
   
+  if(req.employee._id.toString() !== employeeId.toString() && !req.employee.isAdmin){
+    throw new Error("Not authorized as admin.")
+  }
+     
   if(employeeId == "root")
     employeeId = await Employee.find({role: "CEO"});
 
   const employee = getHierarchy(employeeId);
+
+  res.status(201).json({
+    status: "success",
+    data: employee
+  })
 })
 
 const updateEmployeeById = asyncHandler(async (req, res, next) => {
