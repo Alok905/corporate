@@ -5,6 +5,7 @@ import {
   getReportees,
   getReporteesById,
   login,
+  searchEmployee,
   registerEmployee,
   updateDetails,
   updateEmployeeById,
@@ -31,6 +32,8 @@ router
 
 
 // ADMIN ROUTES
+router.route("/").get(searchEmployee);
+
 router.route("/register").post(authenticate, authorizeAdmin, registerEmployee);
 
 router
