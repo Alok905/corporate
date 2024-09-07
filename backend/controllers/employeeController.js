@@ -31,6 +31,13 @@ const login = asyncHandler(async (req, res) => {
   res.status(201).json(employee);
 });
 
+const logout = asyncHandler(async (req, res, next) => {
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+});
+
 const getReportees = asyncHandler(async (req, res, next) => {
   const reportees = await Employee.findById(req.employee._id, {
     reportees: 1,
@@ -353,6 +360,7 @@ const deleteEmployeeById = asyncHandler(async (req, res, next) => {
 
 export {
   login,
+  logout,
   getReportees,
   updateDetails,
   registerEmployee,

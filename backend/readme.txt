@@ -1,4 +1,5 @@
 /login  =>  post
+/logout  =>  post
 /reportees =>  get => get logged in employee's reportees
 /reportees/hierarchy =>  get => get self reportees hierarchy
 /update  =>   put => update logged in employee's details      => { personalEmail, password, mobile }

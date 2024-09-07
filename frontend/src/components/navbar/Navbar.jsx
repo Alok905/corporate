@@ -10,7 +10,10 @@ import {
   BellIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useLogoutMutation } from "../../redux/api/employeeApiSlice";
+import { logout } from "../../redux/slices/employeeSlice";
 
 const navigation = [
   { name: "Home", href: "/", current: true },
@@ -24,10 +27,20 @@ function classNames(...classes) {
 }
 
 export default function Navbar() {
-  const employee = useSelector((state) => state.employee);
+  const { info: employee } = useSelector((state) => state.employee);
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const [logoutApi] = useLogoutMutation();
+  const handleLogout = async () => {
+    await logoutApi();
+    dispatch(logout());
+    navigate("/login");
+  };
   return (
     <Disclosure as="nav" className="bg-gray-800">
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+      <div className="mx-auto container px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             {/* Mobile menu button*/}
@@ -100,15 +113,17 @@ export default function Navbar() {
               type="button"
               className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none "
             >
-              {employee ? (
+              {!employee ? (
                 <ArrowLeftEndOnRectangleIcon
                   aria-hidden="true"
                   className="h-6 w-6"
+                  onClick={() => navigate("/login")}
                 />
               ) : (
                 <ArrowRightStartOnRectangleIcon
                   aria-hidden="true"
                   className="h-6 w-6"
+                  onClick={handleLogout}
                 />
               )}
             </button>

@@ -11,12 +11,14 @@ import {
   getHierarchy,
   getHierarchyById,
   getApprovals,
+  logout,
 } from "../controllers/employeeController.js";
 import { authenticate, authorizeAdmin } from "../middlewares/auth.js";
 
 const router = Router();
 
 router.route("/login").post(login);
+router.route("/logout").post(authenticate, logout);
 router.route("/reportees").get(authenticate, getReportees);
 router.route("/reportees/hierarchy").get(authenticate, getHierarchy);
 router.route("/update").put(authenticate, updateDetails);

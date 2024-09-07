@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Input from "../../components/Input";
 
 const Register = () => {
@@ -10,9 +10,12 @@ const Register = () => {
   const [role, setRole] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState("");
+  useEffect(() => {
+    console.log("hellooooooooo", role);
+  }, [role]);
   return (
     <form className="w-full bg-white  mx-auto p-2 flex flex-wrap justify-between">
-      <h2 className="text-3xl w-full flex align-middle justify-center p-5 font-bold">
+      <h2 className="text-3xl w-full flex align-middle justify-center p-5 font-bold max-width-[45rem]">
         Register Form
       </h2>
       <Input
@@ -22,7 +25,7 @@ const Register = () => {
         label="Enter your name"
         placeholder="John Doe"
         onChange={(e) => setName(e.target.value)}
-        className="mt-[1rem] w-full md:w-[49%] lg:w-[32%]"
+        className="mt-[1rem] w-full md:w-[49%]"
       />
       <Input
         value={email}
@@ -30,7 +33,7 @@ const Register = () => {
         label="Enter your email"
         placeholder="abc@mycom.com"
         onChange={(e) => setEmail(e.target.value)}
-        className="mt-[1rem] w-full md:w-[49%] lg:w-[32%]"
+        className="mt-[1rem] w-full md:w-[49%]"
       />
       <Input
         value={personalEmail}
@@ -38,7 +41,7 @@ const Register = () => {
         label="Enter your personal email"
         placeholder="abc@example.com"
         onChange={(e) => setPersonalEmail(e.target.value)}
-        className="mt-[1rem] w-full md:w-[49%] lg:w-[32%]"
+        className="mt-[1rem] w-full md:w-[49%]"
       />
       <Input
         value={mobile}
@@ -46,7 +49,7 @@ const Register = () => {
         label="Enter your number"
         placeholder="9963466453"
         onChange={(e) => setMobile(e.target.value)}
-        className="mt-[1rem] w-full md:w-[49%] lg:w-[32%]"
+        className="mt-[1rem] w-full md:w-[49%]"
       />
       <Input
         value={reporter}
@@ -54,7 +57,7 @@ const Register = () => {
         label="Enter your reporter email"
         placeholder="abc@mycom.com"
         onChange={(e) => setReporter(e.target.value)}
-        className="mt-[1rem] w-full md:w-[49%] lg:w-[32%]"
+        className="mt-[1rem] w-full md:w-[49%]"
       />
       <Input
         value={password}
@@ -63,26 +66,27 @@ const Register = () => {
         label="Enter your password"
         placeholder="password"
         onChange={(e) => setPassword(e.target.value)}
-        className="mt-[1rem] w-full md:w-[49%] lg:w-[32%]"
+        className="mt-[1rem] w-full md:w-[49%]"
       />
       <div
-        className={`rounded-md border-gray-900 border-[2px] p-2 mt-[1rem]  w-[49%]`}
+        className={`rounded-md border-gray-900 border-[1px] p-2 mt-[1rem] w-full md:w-[49%]`}
       >
         <label
           for="countries"
-          class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+          class="mb-[2rem] font-semibold text-base text-[#3e3838]"
         >
           Select the role
         </label>
         <select
           id="countries"
-          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          class="w-full text-base text-gray-900 border-b-[#000000] border-b-[1.5px] border-t-0 border-l-0 border-r-0 shadow-none focus:ring-0 focus:border-b-[#232e38] "
+          onChange={(e) => setRole(e.target.value)}
         >
           <option selected>Choose a role</option>
           <option value="SENIOR_MANAGER">Senior Manager</option>
           <option value="MANAGER">Manager</option>
           <option value="LEAD">Lead</option>
-          <option value="FRESHER">Freaher</option>
+          <option value="FRESHER">Fresher</option>
           <option value="INTERN">Intern</option>
         </select>
       </div>

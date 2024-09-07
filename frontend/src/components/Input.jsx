@@ -11,9 +11,12 @@ const Input = ({
 }) => {
   return (
     <div
-      className={`rounded-md border-gray-900 border-[2px] p-2  ${className}`}
+      className={`rounded-md border-gray-900 border-[1px] p-2  ${className}`}
     >
-      <label htmlFor="email" className="mb-[2rem] text-base">
+      <label
+        htmlFor="email"
+        className="mb-[2rem] font-semibold text-base text-[#3e3838]"
+      >
         {label}
       </label>
       <input
@@ -23,7 +26,7 @@ const Input = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full text-base font-semibold text-gray-900 border-b-[#0f1418] border-b-[2px] border-t-0 border-l-0 border-r-0 shadow-none focus:ring-0 focus:border-b-[#232e38]`}
+        className={`w-full text-base text-gray-900 border-b-[#000000] border-b-[1.5px] border-t-0 border-l-0 border-r-0 shadow-none focus:ring-0 focus:border-b-[#232e38]`}
       />
     </div>
   );
